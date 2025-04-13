@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./css/style.css">
+  <title>Мурожаатлар Бўйича Ҳисобот</title>
+
+</head>
+<body>
+  <h1>Мурожаатлар Бўйича Ҳисобот</h1>
+  
+  <div class="container">
+    <h2>📍 Областьни танланг:</h2>
+    <select id="regionSelect">
+      <option value="toshkent">Тошкент</option>
+      <option value="самарканд">Самарқанд</option>
+      <option value="бухоро">Бухоро</option>
+      <option value="наманган">Наманган</option>
+      <option value="фаргона">Фарғона</option>
+      <option value="андижан">Андижон</option>
+      <option value="хива">Хоразм</option>
+      <option value="сурхандарё">Сурхандарё</option>
+      <option value="навои">Навоий</option>
+      <option value="кашкадарё">Қашқадарё</option>
+      <option value="сизз">Сирдарё</option>
+      <option value="жиззах">Жиззах</option>
+    </select>
+
+    <h2>📅 Йилни танланг:</h2>
+    <select id="yearSelect">
+      <option value="2024">2024</option>
+      <option value="2023">2023</option>
+      <option value="2022">2022</option>
+      <option value="2021">2021</option>
+    </select>
+    
+    <h3>Малумотларни киритинг:</h3>
+    <div class="grid">
+      <div>
+        <label>Жами мурожаатлар</label>
+        <input type="number" id="total" />
+      </div>
+      <div>
+        <label>Жисмоний шахслар</label>
+        <input type="number" id="individual" />
+      </div>
+      <div>
+        <label>Юридик шахслар</label>
+        <input type="number" id="legal" />
+      </div>
+      <div>
+        <label>Ёзма</label>
+        <input type="number" id="written" />
+      </div>
+      <div>
+        <label>Электрон</label>
+        <input type="number" id="electronic" />
+      </div>
+      <div>
+        <label>Оғзаки</label>
+        <input type="number" id="oral" />
+      </div>
+    </div>
+    <br>
+    <button onclick="saveData()">💾 Сақлаш</button>
+    <button onclick="downloadPDF()">📄 Юклаб олиш (PDF)</button>
+  </div>
+
+  <div class="container">
+    <h2>📊 График</h2>
+    <canvas id="chart"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const { jsPDF } = window.jspdf;
+    const inputs = {
+      total: document.getElementById("total"),
+      individual: document.getElementById("individual"),
+      legal: document.getElementById("legal"),
+      written: document.getElementById("written"),
+      electronic: document.getElementById("electronic"),
+      oral: document.getElementById("oral")
+    };
+
+    const ctx = document.getElementById("chart").getContext("2d");
+    let chart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["Жами", "Жисмоний", "Юридик", "Ёзма", "Электрон", "Оғзаки"],
+        datasets: [{
+          label: "Мурожаатлар",
+          data: [0, 0, 0, 0, 0, 0],
+          backgroundColor: ["#0077cc", "#0099cc", "#00bbaa", "#33cc77", "#99cc00", "#ff9933"]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    function saveData() {
+      const region = document.getElementById("regionSelect").value;
+      const year = document.getElementById("yearSelect").value;
+      const data = {
+        total: +inputs.total.value,
+        individual: +inputs.individual.value,
+        legal: +inputs.legal.value,
+        written: +inputs.written.value,
+        electronic: +inputs.electronic.value,
+        oral: +inputs.oral.value
+      };
+      localStorage.setItem(`regionData_${region}_${year}`, JSON.stringify(data));
+      updateChart(data);
+    }
+
+    function updateChart(data) {
+      chart.data.datasets[0].data = [
+        data.total,
+        data.individual,
+        data.legal,
+        data.written,
+        data.electronic,
+        data.oral
+      ];
+      chart.update();
+    }
+
+    function loadData(region, year) {
+      const data = JSON.parse(localStorage.getItem(`regionData_${region}_${year}`)) || {
+        total: 0,
+        individual: 0,
+        legal: 0,
+        written: 0,
+        electronic: 0,
+        oral: 0
+      };
+      inputs.total.value = data.total;
+      inputs.individual.value = data.individual;
+      inputs.legal.value = data.legal;
+      inputs.written.value = data.written;
+      inputs.electronic.value = data.electronic;
+      inputs.oral.value = data.oral;
+      updateChart(data);
+    }
+
+    document.getElementById("regionSelect").addEventListener("change", (e) => {
+      const year = document.getElementById("yearSelect").value;
+      loadData(e.target.value, year);
+    });
+
+    document.getElementById("yearSelect").addEventListener("change", (e) => {
+      const region = document.getElementById("regionSelect").value;
+      loadData(region, e.target.value);
+    });
+
+    window.onload = () => {
+      const initialRegion = document.getElementById("regionSelect").value;
+      const initialYear = document.getElementById("yearSelect").value;
+      loadData(initialRegion, initialYear);
+    };
+
+    function downloadPDF() {
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text("Мурожаатлар Бўйича Ҳисобот", 20, 20);
+
+      doc.setFontSize(12);
+      doc.text(`Область: ${document.getElementById("regionSelect").value}`, 20, 30);
+      doc.text(`Йил: ${document.getElementById("yearSelect").value}`, 20, 40);
+      doc.text(`Жами мурожаатлар: ${inputs.total.value}`, 20, 50);
+      doc.text(`Жисмоний шахслар: ${inputs.individual.value}`, 20, 60);
+      doc.text(`Юридик шахслар: ${inputs.legal.value}`, 20, 70);
+      doc.text(`Ёзма: ${inputs.written.value}`, 20, 80);
+      doc.text(`Электрон: ${inputs.electronic.value}`, 20, 90);
+      doc.text(`Оғзаки: ${inputs.oral.value}`, 20, 100);
+
+      doc.addPage();
+      doc.text("График", 20, 20);
+      doc.addImage(chart.toBase64Image(), "PNG", 20, 30, 170, 120);
+
+      doc.save(`murujatlar_отчет_${document.getElementById("regionSelect").value}_${document.getElementById("yearSelect").value}.pdf`);
+    }
+  </script>
+</body>
+</html>
