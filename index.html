@@ -41,30 +41,29 @@
     <h3>Малумотларни киритинг:</h3>
     <div class="grid">
       <div>
-        <label>Жами мурожаатлар</label>
-        <input type="number" id="total" />
-      </div>
-      <div>
         <label>Жисмоний шахслар</label>
-        <input type="number" id="individual" />
+        <input type="number" id="individual" oninput="calculateTotal()" />
       </div>
       <div>
         <label>Юридик шахслар</label>
-        <input type="number" id="legal" />
+        <input type="number" id="legal" oninput="calculateTotal()" />
       </div>
       <div>
         <label>Ёзма</label>
-        <input type="number" id="written" />
+        <input type="number" id="written" oninput="calculateTotal()" />
       </div>
       <div>
         <label>Электрон</label>
-        <input type="number" id="electronic" />
+        <input type="number" id="electronic" oninput="calculateTotal()" />
       </div>
       <div>
         <label>Оғзаки</label>
-        <input type="number" id="oral" />
+        <input type="number" id="oral" oninput="calculateTotal()" />
       </div>
     </div>
+
+    <h3>Жами мурожаатлар: <span id="totalCount">0</span></h3>
+    
     <br>
     <button onclick="saveData()">💾 Сақлаш</button>
     <button onclick="downloadPDF()">📄 Юклаб олиш (PDF)</button>
@@ -86,7 +85,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <script>
     const inputs = {
-      total: document.getElementById("total"),
       individual: document.getElementById("individual"),
       legal: document.getElementById("legal"),
       written: document.getElementById("written"),
@@ -94,12 +92,12 @@
       oral: document.getElementById("oral")
     };
 
+    const totalCount = document.getElementById("totalCount");
     const ctx = document.getElementById("chart").getContext("2d");
     let chart = new Chart(ctx, {
       type: "bar",
       data: {
         labels: [
-          "📊 Жами",
           "👤 Жисмоний",
           "🏢 Юридик",
           "📝 Ёзма",
@@ -108,9 +106,8 @@
         ],
         datasets: [{
           label: "Мурожаатлар",
-          data: [0, 0, 0, 0, 0, 0],
+          data: [0, 0, 0, 0, 0],
           backgroundColor: [
-            "#0077cc",
             "#0099cc",
             "#00bbaa",
             "#33cc77",
@@ -121,7 +118,7 @@
         }]
       },
       options: {
-        indexAxis: 'y', // горизонтальные бары
+        indexAxis: 'y',
         responsive: true,
         plugins: {
           legend: { display: false },
@@ -143,7 +140,6 @@
     function saveData() {
       const region = document.getElementById("regionSelect").value;
       const data = {
-        total: +inputs.total.value,
         individual: +inputs.individual.value,
         legal: +inputs.legal.value,
         written: +inputs.written.value,
@@ -158,7 +154,6 @@
     // Обновление данных на графике
     function updateChart(data) {
       chart.data.datasets[0].data = [
-        data.total,
         data.individual,
         data.legal,
         data.written,
@@ -171,14 +166,12 @@
     // Загрузка данных из localStorage
     function loadData(region) {
       const data = JSON.parse(localStorage.getItem(`regionData_${region}`)) || {
-        total: 0,
         individual: 0,
         legal: 0,
         written: 0,
         electronic: 0,
         oral: 0
       };
-      inputs.total.value = data.total;
       inputs.individual.value = data.individual;
       inputs.legal.value = data.legal;
       inputs.written.value = data.written;
@@ -186,21 +179,23 @@
       inputs.oral.value = data.oral;
       updateChart(data);
       updateSummary(region, data);
+      calculateTotal();  // Ensure total is calculated
     }
 
     // Обновление общего отчета для выбранного региона
     function updateSummary(region, data) {
       const regionSummary = document.getElementById("regionSummary");
-      regionSummary.innerHTML = `
+      regionSummary.innerHTML = ` 
         <p>📍 <strong>${region.charAt(0).toUpperCase() + region.slice(1)}</strong>:</p>
         <ul>
-          <li>Жами мурожаатлар: ${data.total}</li>
           <li>Жисмоний шахслар: ${data.individual}</li>
           <li>Юридик шахслар: ${data.legal}</li>
           <li>Ёзма: ${data.written}</li>
           <li>Электрон: ${data.electronic}</li>
           <li>Оғзаки: ${data.oral}</li>
         </ul>
+        <hr>
+        <h4>Жами мурожаатлар: ${data.individual + data.legal + data.written + data.electronic + data.oral}</h4>
       `;
     }
 
@@ -212,6 +207,12 @@
       const initialRegion = document.getElementById("regionSelect").value;
       loadData(initialRegion);
     };
+
+    // Функция для вычисления общего количества
+    function calculateTotal() {
+      const total = +inputs.individual.value + +inputs.legal.value + +inputs.written.value + +inputs.electronic.value + +inputs.oral.value;
+      totalCount.textContent = total;
+    }
 
     // Генерация PDF отчета
     function downloadPDF() {
@@ -228,18 +229,18 @@
       doc.text(`Йил: ${document.getElementById("yearSelect").value}`, 20, 40);
       
       // Вставим таблицу с данными
-      doc.text(`Жами мурожаатлар: ${inputs.total.value}`, 20, 50);
-      doc.text(`Жисмоний шахслар: ${inputs.individual.value}`, 20, 60);
-      doc.text(`Юридик шахслар: ${inputs.legal.value}`, 20, 70);
-      doc.text(`Ёзма: ${inputs.written.value}`, 20, 80);
-      doc.text(`Электрон: ${inputs.electronic.value}`, 20, 90);
-      doc.text(`Оғзаки: ${inputs.oral.value}`, 20, 100);
+      doc.text(`Жисмоний шахслар: ${inputs.individual.value}`, 20, 50);
+      doc.text(`Юридик шахслар: ${inputs.legal.value}`, 20, 60);
+      doc.text(`Ёзма: ${inputs.written.value}`, 20, 70);
+      doc.text(`Электрон: ${inputs.electronic.value}`, 20, 80);
+      doc.text(`Оғзаки: ${inputs.oral.value}`, 20, 90);
+      doc.text(`Жами мурожаатлар: ${totalCount.textContent}`, 20, 100);
       
       // Добавим график в PDF
       const canvas = document.getElementById('chart');
       const imgData = canvas.toDataURL("image/png");
       doc.addImage(imgData, 'PNG', 20, 110, 170, 90); // Добавляем изображение графика
-      
+     
       // Сохраняем PDF
       doc.save("report.pdf");
     }
