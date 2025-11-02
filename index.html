@@ -8,11 +8,11 @@
 
   <!-- jsPDF -->
   <script src="https://cdn.jsdelivr.net/npm/jsPDF@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <h1>Мурожаатлар Бўйича Ҳисобот</h1>
   
-  <!-- Данные отчета -->
   <div class="container">
     <h2>📍 Ҳудудлар</h2>
     <select id="regionSelect">
@@ -35,34 +35,36 @@
 
     <h2>📅 Йилни танланг:</h2>
     <select id="yearSelect">
+      <option value="2025">2025</option>
       <option value="2024">2024</option>
       <option value="2023">2023</option>
       <option value="2022">2022</option>
       <option value="2021">2021</option>
     </select>
+
+    <h2>📅 Ойни танланг:</h2>
+    <select id="monthSelect">
+      <option value="yanvar">Январ</option>
+      <option value="fevral">Феврал</option>
+      <option value="mart">Март</option>
+      <option value="aprel">Апрел</option>
+      <option value="may">Май</option>
+      <option value="iyun">Июн</option>
+      <option value="iyul">Июл</option>
+      <option value="avgust">Август</option>
+      <option value="sentabr">Сентябр</option>
+      <option value="oktabr">Октябр</option>
+      <option value="noyabr">Ноябр</option>
+      <option value="dekabr">Декабр</option>
+    </select>
     
     <h3>Малумотларни киритинг:</h3>
     <div class="grid">
-      <div>
-        <label>Жисмоний шахслар</label>
-        <input type="number" id="individual" oninput="calculateTotal()" />
-      </div>
-      <div>
-        <label>Юридик шахслар</label>
-        <input type="number" id="legal" oninput="calculateTotal()" />
-      </div>
-      <div>
-        <label>Ёзма</label>
-        <input type="number" id="written" oninput="calculateTotal()" />
-      </div>
-      <div>
-        <label>Электрон</label>
-        <input type="number" id="electronic" oninput="calculateTotal()" />
-      </div>
-      <div>
-        <label>Оғзаки</label>
-        <input type="number" id="oral" oninput="calculateTotal()" />
-      </div>
+      <div><label>Жисмоний шахслар</label><input type="number" id="individual" oninput="calculateTotal()" /></div>
+      <div><label>Юридик шахслар</label><input type="number" id="legal" oninput="calculateTotal()" /></div>
+      <div><label>Ёзма</label><input type="number" id="written" oninput="calculateTotal()" /></div>
+      <div><label>Электрон</label><input type="number" id="electronic" oninput="calculateTotal()" /></div>
+      <div><label>Оғзаки</label><input type="number" id="oral" oninput="calculateTotal()" /></div>
     </div>
 
     <h3>Жами мурожаатлар: <span id="totalCount">0</span></h3>
@@ -73,19 +75,15 @@
   </div>
 
   <div class="container">
-    <h2>📊 График</h2>
-    <canvas id="chart"></canvas>
+    <h2>📊 Танланган ой бўйича график</h2>
+    <canvas id="monthlyChart"></canvas>
   </div>
 
   <div class="container">
-    <h3>📈 Обшиий Отчет:</h3>
-    <div id="regionSummary">
-      <!-- Общий отчет для выбранного региона -->
-    </div>
+    <h2>📊 Йиллик умумий график</h2>
+    <canvas id="yearlyChart"></canvas>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <script>
     const inputs = {
       individual: document.getElementById("individual"),
@@ -94,54 +92,40 @@
       electronic: document.getElementById("electronic"),
       oral: document.getElementById("oral")
     };
-
     const totalCount = document.getElementById("totalCount");
-    const ctx = document.getElementById("chart").getContext("2d");
-    let chart = new Chart(ctx, {
+
+    // Oylik chart
+    const monthlyCtx = document.getElementById("monthlyChart").getContext("2d");
+    let monthlyChart = new Chart(monthlyCtx, {
       type: "bar",
       data: {
-        labels: [
-          "👤 Жисмоний",
-          "🏢 Юридик",
-          "📝 Ёзма",
-          "💻 Электрон",
-          "🗣️ Оғзаки"
-        ],
-        datasets: [{
-          label: "Мурожаатлар",
-          data: [0, 0, 0, 0, 0],
-          backgroundColor: [
-            "#0099cc",
-            "#00bbaa",
-            "#33cc77",
-            "#99cc00",
-            "#ff9933"
-          ],
-          borderRadius: 5,
-        }]
+        labels: ["Жисмоний", "Юридик", "Ёзма", "Электрон", "Оғзаки"],
+        datasets: [{ label: "Мурожаатлар", data: [0,0,0,0,0], backgroundColor: ["#0099cc","#00bbaa","#33cc77","#99cc00","#ff9933"], borderRadius: 5 }]
       },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          datalabels: {
-            color: '#000',
-            anchor: 'end',
-            align: 'right',
-            font: { weight: 'bold' }
-          }
-        },
-        scales: {
-          x: { beginAtZero: true }
-        }
-      },
-      plugins: [ChartDataLabels]
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
     });
 
-    // Сохранение данных в localStorage
+    // Yillik chart
+    const yearlyCtx = document.getElementById("yearlyChart").getContext("2d");
+    let yearlyChart = new Chart(yearlyCtx, {
+      type: "bar",
+      data: {
+        labels: ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"],
+        datasets: [{ label: "Жами мурожаатлар", data: Array(12).fill(0), backgroundColor: "#0077cc", borderRadius: 5 }]
+      },
+      options: { responsive: true, plugins:{legend:{display:false}}, scales: { y: { beginAtZero: true } } }
+    });
+
+    function getKey(region, year, month) {
+      return `regionData_${region}_${year}_${month}`;
+    }
+
     function saveData() {
-      const region = document.getElementById("regionSelect").value;
+      const region = regionSelect.value;
+      const year = yearSelect.value;
+      const month = monthSelect.value;
+      const key = getKey(region, year, month);
+
       const data = {
         individual: +inputs.individual.value,
         legal: +inputs.legal.value,
@@ -149,102 +133,85 @@
         electronic: +inputs.electronic.value,
         oral: +inputs.oral.value
       };
-      localStorage.setItem(`regionData_${region}`, JSON.stringify(data));
-      updateChart(data);
-      updateSummary(region, data);
+
+      localStorage.setItem(key, JSON.stringify(data));
+      updateMonthlyChart(data);
+      updateYearlyChart(year, region);
     }
 
-    // Обновление данных на графике
-    function updateChart(data) {
-      chart.data.datasets[0].data = [
-        data.individual,
-        data.legal,
-        data.written,
-        data.electronic,
-        data.oral
-      ];
-      chart.update();
-    }
+    function loadData(region, year, month) {
+      const key = getKey(region, year, month);
+      const data = JSON.parse(localStorage.getItem(key)) || { individual:0, legal:0, written:0, electronic:0, oral:0 };
 
-    // Загрузка данных из localStorage
-    function loadData(region) {
-      const data = JSON.parse(localStorage.getItem(`regionData_${region}`)) || {
-        individual: 0,
-        legal: 0,
-        written: 0,
-        electronic: 0,
-        oral: 0
-      };
       inputs.individual.value = data.individual;
       inputs.legal.value = data.legal;
       inputs.written.value = data.written;
       inputs.electronic.value = data.electronic;
       inputs.oral.value = data.oral;
-      updateChart(data);
-      updateSummary(region, data);
-      calculateTotal();  // Ensure total is calculated
+
+      updateMonthlyChart(data);
+      updateYearlyChart(year, region);
+      calculateTotal();
     }
 
-    // Обновление общего отчета для выбранного региона
-    function updateSummary(region, data) {
-      const regionSummary = document.getElementById("regionSummary");
-      regionSummary.innerHTML = ` 
-        <p>📍 <strong>${region.charAt(0).toUpperCase() + region.slice(1)}</strong>:</p>
-        <ul>
-          <li>Жисмоний шахслар: ${data.individual}</li>
-          <li>Юридик шахслар: ${data.legal}</li>
-          <li>Ёзма: ${data.written}</li>
-          <li>Электрон: ${data.electronic}</li>
-          <li>Оғзаки: ${data.oral}</li>
-        </ul>
-        <hr>
-        <h4>Жами мурожаатлар: ${data.individual + data.legal + data.written + data.electronic + data.oral}</h4>
-      `;
+    function updateMonthlyChart(data) {
+      monthlyChart.data.datasets[0].data = [data.individual, data.legal, data.written, data.electronic, data.oral];
+      monthlyChart.update();
     }
 
-    document.getElementById("regionSelect").addEventListener("change", (e) => {
-      loadData(e.target.value);
-    });
+    function updateYearlyChart(year, region) {
+      const months = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
+      const totals = months.map(month => {
+        const key = getKey(region, year, month);
+        const d = JSON.parse(localStorage.getItem(key)) || { individual:0, legal:0, written:0, electronic:0, oral:0 };
+        return d.individual + d.legal + d.written + d.electronic + d.oral;
+      });
+      yearlyChart.data.datasets[0].data = totals;
+      yearlyChart.update();
+    }
 
-    window.onload = () => {
-      const initialRegion = document.getElementById("regionSelect").value;
-      loadData(initialRegion);
-    };
-
-    // Функция для вычисления общего количества
     function calculateTotal() {
       const total = +inputs.individual.value + +inputs.legal.value + +inputs.written.value + +inputs.electronic.value + +inputs.oral.value;
       totalCount.textContent = total;
     }
 
-    // Генерация PDF отчета
+    regionSelect.addEventListener("change", () => loadData(regionSelect.value, yearSelect.value, monthSelect.value));
+    yearSelect.addEventListener("change", () => loadData(regionSelect.value, yearSelect.value, monthSelect.value));
+    monthSelect.addEventListener("change", () => loadData(regionSelect.value, yearSelect.value, monthSelect.value));
+
+    window.onload = () => { loadData(regionSelect.value, yearSelect.value, monthSelect.value); };
+
     function downloadPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      
-      // Заголовок
+
+      const region = regionSelect.value;
+      const year = yearSelect.value;
+      const month = monthSelect.value;
+
       doc.setFontSize(16);
       doc.text("Мурожаатлар Бўйича Ҳисобот", 20, 20);
-      
-      // Добавим данные из формы
+
       doc.setFontSize(12);
-      doc.text(`Область: ${document.getElementById("regionSelect").value}`, 20, 30);
-      doc.text(`Йил: ${document.getElementById("yearSelect").value}`, 20, 40);
-      
-      // Вставим таблицу с данными
-      doc.text(`Жисмоний шахслар: ${inputs.individual.value}`, 20, 50);
-      doc.text(`Юридик шахслар: ${inputs.legal.value}`, 20, 60);
-      doc.text(`Ёзма: ${inputs.written.value}`, 20, 70);
-      doc.text(`Электрон: ${inputs.electronic.value}`, 20, 80);
-      doc.text(`Оғзаки: ${inputs.oral.value}`, 20, 90);
-      doc.text(`Жами мурожаатлар: ${totalCount.textContent}`, 20, 100);
-      
-      // Добавим график в PDF
-      const canvas = document.getElementById('chart');
+      doc.text(`Область: ${region}`, 20, 30);
+      doc.text(`Йил: ${year}`, 20, 40);
+      doc.text(`Ой: ${month}`, 20, 50);
+
+      doc.text(`Жисмоний шахслар: ${inputs.individual.value}`, 20, 60);
+      doc.text(`Юридик шахслар: ${inputs.legal.value}`, 20, 70);
+      doc.text(`Ёзма: ${inputs.written.value}`, 20, 80);
+      doc.text(`Электрон: ${inputs.electronic.value}`, 20, 90);
+      doc.text(`Оғзаки: ${inputs.oral.value}`, 20, 100);
+      doc.text(`Жами мурожаатлар: ${totalCount.textContent}`, 20, 110);
+
+      const canvas = document.getElementById('monthlyChart');
       const imgData = canvas.toDataURL("image/png");
-      doc.addImage(imgData, 'PNG', 20, 110, 170, 90); // Добавляем изображение графика
-     
-      // Сохраняем PDF
+      doc.addImage(imgData, 'PNG', 20, 120, 170, 80);
+
+      const canvas2 = document.getElementById('yearlyChart');
+      const imgData2 = canvas2.toDataURL("image/png");
+      doc.addImage(imgData2, 'PNG', 20, 210, 170, 80);
+
       doc.save("report.pdf");
     }
   </script>
