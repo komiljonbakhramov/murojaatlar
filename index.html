@@ -6,9 +6,11 @@
   <link rel="stylesheet" href="./css/style.css">
   <title>Мурожаатлар Бўйича Ҳисобот</title>
 
-  <!-- jsPDF -->
+  <!-- jsPDF va Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/jsPDF@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 </head>
 <body>
   <h1>Мурожаатлар Бўйича Ҳисобот</h1>
@@ -84,6 +86,11 @@
     <canvas id="yearlyChart"></canvas>
   </div>
 
+  <div class="container">
+    <h2>📈 Барча бошқармалар бўйича солиштирма диаграмма</h2>
+    <canvas id="regionCompareChart" width="300" height="300"></canvas>
+  </div>
+
   <script>
     const inputs = {
       individual: document.getElementById("individual"),
@@ -116,6 +123,34 @@
       options: { responsive: true, plugins:{legend:{display:false}}, scales: { y: { beginAtZero: true } } }
     });
 
+    // Dumaloq diagramma — barcha boshqarmalar uchun
+    const regionCompareCtx = document.getElementById("regionCompareChart").getContext("2d");
+    let regionCompareChart = new Chart(regionCompareCtx, {
+      type: "doughnut",
+      data: {
+        labels: [
+          "Республика", "Тошкент", "Самарканд", "Бухоро", "Наманган",
+          "Фарғона", "Андижон", "Хоразм", "Сурхандарё", "Навоий",
+          "Қашқадарё", "Сирдарё", "Жиззах", "Тошкент-Аэро", "Кинология"
+        ],
+        datasets: [{
+          label: "Жами мурожаатлар",
+          data: [],
+          backgroundColor: [
+            "#007bff","#28a745","#ffc107","#17a2b8","#6f42c1",
+            "#fd7e14","#20c997","#6610f2","#dc3545","#00c0ef",
+            "#ff851b","#01ff70","#ff66cc","#9999ff","#66ff99"
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        cutout: "60%",
+        plugins: { legend: { position: "bottom" } }
+      }
+    });
+
     function getKey(region, year, month) {
       return `regionData_${region}_${year}_${month}`;
     }
@@ -137,6 +172,7 @@
       localStorage.setItem(key, JSON.stringify(data));
       updateMonthlyChart(data);
       updateYearlyChart(year, region);
+      updateRegionCompareChart(year); // ✅ dumaloq grafikni yangilaydi
     }
 
     function loadData(region, year, month) {
@@ -151,6 +187,7 @@
 
       updateMonthlyChart(data);
       updateYearlyChart(year, region);
+      updateRegionCompareChart(year);
       calculateTotal();
     }
 
@@ -168,6 +205,23 @@
       });
       yearlyChart.data.datasets[0].data = totals;
       yearlyChart.update();
+    }
+
+    function updateRegionCompareChart(year) {
+      const regions = [
+        "Республика", "toshkent", "самарканд", "бухоро", "наманган", "фаргона",
+        "андижан", "хива", "сурхандарё", "навои", "кашкадарё", "сизз", "жиззах", "Аэро", "Кинология"
+      ];
+      const months = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
+      const totals = regions.map(region => {
+        return months.reduce((sum, month) => {
+          const key = getKey(region, year, month);
+          const d = JSON.parse(localStorage.getItem(key)) || { individual:0, legal:0, written:0, electronic:0, oral:0 };
+          return sum + d.individual + d.legal + d.written + d.electronic + d.oral;
+        }, 0);
+      });
+      regionCompareChart.data.datasets[0].data = totals;
+      regionCompareChart.update();
     }
 
     function calculateTotal() {
